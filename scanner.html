@@ -1,0 +1,145 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scanner QR - WAFRICASTORE</title>
+  <script src="https://unpkg.com/@ericblade/quagga2@0.1.8/dist/quagga.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #FFA500;
+      color: #fff;
+      text-align: center;
+    }
+    header {
+      background-color: #e09000;
+      padding: 15px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .logo {
+      max-width: 150px;
+      margin: 10px auto;
+    }
+    h1 { margin-top: 10px; font-size: 22px; }
+    #interactive.viewport {
+      width: 100%;
+      max-width: 400px;
+      height: 300px;
+      margin: 20px auto;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    canvas.drawingBuffer { display: none; }
+    #scan-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: red;
+      animation: scan 2s infinite linear;
+      z-index: 2;
+    }
+    @keyframes scan {
+      0% { top: 0; }
+      100% { top: 100%; }
+    }
+    #result {
+      font-size: 18px;
+      margin: 15px;
+      min-height: 25px;
+    }
+    #validResult {
+      font-weight: bold;
+      font-size: 26px;
+      margin-top: 20px;
+    }
+    button {
+      background-color: white;
+      color: #FFA500;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #ffe066; }
+    footer {
+      margin-top: 30px;
+      font-size: 12px;
+      opacity: 0.7;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <img class="logo" src="https://i.ibb.co/JWjTd6td/IMG-20250612-011807.png" alt="Logo WAFRICASTORE">
+  <h1>Scanner de QR Code - WAFRICASTORE</h1>
+</header>
+<div id="interactive" class="viewport">
+  <div id="scan-line"></div>
+</div>
+<div id="result">Attente d’un code QR...</div>
+<div id="validResult"></div>
+<button onclick="resetScan()">Réinitialiser</button>
+<footer>
+  &copy; 2025 WAFRICASTORE - Application de vérification QR
+</footer>
+<script>
+  const codesAutorises = ["CODE1", "CODE2", "CODE3"];
+  function startScanner() {
+    document.getElementById("validResult").innerText = "";
+    document.getElementById("result").innerText = "En cours de scan...";
+    if (window.Quagga && Quagga.initialized) {
+      Quagga.stop();
+    }
+    Quagga.init({
+      inputStream: {
+        type: "LiveStream",
+        target: document.querySelector('#interactive'),
+        constraints: { facingMode: "environment" }
+      },
+      decoder: { readers: ["qrcode_reader"] }
+    }, function (err) {
+      if (err) {
+        document.getElementById("result").innerText = "Erreur : Impossible d'accéder à la caméra.";
+        console.error(err);
+        return;
+      }
+      Quagga.initialized = true;
+      Quagga.start();
+    });
+    Quagga.onDetected(data => {
+      const code = data.codeResult.code.trim();
+      document.getElementById("result").innerText = `Code lu : ${code}`;
+      validateCode(code);
+      Quagga.stop();
+    });
+  }
+  function validateCode(code) {
+    const resultDiv = document.getElementById("validResult");
+    if (codesAutorises.includes(code)) {
+      resultDiv.innerText = "✅ Validé";
+      resultDiv.style.color = "#fff";
+    } else {
+      resultDiv.innerText = "❌ Refusé";
+      resultDiv.style.color = "#fff";
+    }
+  }
+  function resetScan() {
+    document.getElementById("validResult").innerText = "";
+    document.getElementById("result").innerText = "Attente d’un code QR...";
+    startScanner();
+  }
+  window.addEventListener('load', () => { startScanner(); });
+</script>
+</body>
+</html>
